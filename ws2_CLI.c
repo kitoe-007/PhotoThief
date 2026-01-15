@@ -9,13 +9,17 @@
 #endif
 #include <string.h>
 #include <winsock2.h>
-#include <windows.h>
+//#include <windows.h>
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #define PUBLIC_PORT "55555"
 
+// COMPILE WITH -lws2_32 if on clang or use #pragma with linking parameters for ws2_32 lib
+/* Это ТЕСТ клиента, он рабочий, но ему нужен сервер. Скорее всего
+будет враппер и норм реализация */
 
 int main() {
   WSADATA wsaData;
@@ -36,10 +40,20 @@ int main() {
   );
   while (true) {
     call_result = connect(socket1, result_copy->ai_addr, result_copy->ai_addrlen);
-    if (call_result == SOCKET_ERROR) {
-      printf ("Connection error, retrying...");
+    if (call_result == SOCKET_ERROR && result_copy->ai_next != NULL) {
+      printf ("Connection error, retrying...\n");
       result_copy = result_copy->ai_next;
+      closesocket(socket1);
+      socket1 = socket(
+      result_copy->ai_family,
+      result_copy->ai_socktype,
+      result_copy->ai_protocol
+      );
       continue;
+    }
+    else if (result_copy->ai_next == NULL && call_result == SOCKET_ERROR) {
+      printf("connection aborted, forcefully quitting");
+      exit(0);
     }
     else break;
   }
