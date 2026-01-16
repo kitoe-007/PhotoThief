@@ -57,7 +57,7 @@ int main() {
     }
     else break;
   }
-  char buftext[15] = "this is a test";
+  char buftext[17] = "this is a test/0";
   char recvbuf[1000];
   printf("sending buffer");
   call_result = send(socket1, buftext, 512, 0);
