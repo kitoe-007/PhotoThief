@@ -16,6 +16,7 @@ void ResultWrap(int result) {
   }
   else if (result == SOCKET_ERROR) {
     printf("Socket failed with an error: %d\n", WSAGetLastError());
+    WSACleanup();
   }
 }
 // check the socket for potential errors
