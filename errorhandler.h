@@ -1,30 +1,36 @@
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
+#pragma once
+#ifndef UNICODE
+#define UNICODE
 #endif
-#include <stdio.h>
+#ifndef _UNICODE
+#define _UNICODE
+#endif
+#ifndef WIN32_MEAN_AND_LEAN
+#define WIN32_MEAN_AND_LEAN
+#endif
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <stdbool.h>
-#ifdef CALLWRAP
-
 // check the result integer for a potential errors, retrieve last error
-void ResultWrap(int result) {
+static inline void ResultWrap(int result, LPADDRINFO addrinforef) {
   if (result != 0) {
     printf("Error occured upon calling: %d, error code in result: %d\n", WSAGetLastError(), result);
     WSACleanup();
   }
   else if (result == SOCKET_ERROR) {
     printf("Socket failed with an error: %d\n", WSAGetLastError());
+    freeaddrinfo(addrinforef);
     WSACleanup();
   }
 }
 // check the socket for potential errors
-void CheskSock(SOCKET s){
+static inline void CheckSock(SOCKET s) {
   if (s == INVALID_SOCKET){
     printf("something's wrong with the socket settings, stopping now (%d)\n", WSAGetLastError());
     closesocket(s);
     WSACleanup();
     }
 }
-#endif
