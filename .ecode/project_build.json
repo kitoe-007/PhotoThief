@@ -1,0 +1,41 @@
+{
+  "Cbuild w/ws2_32": {
+    "build": [
+      {
+        "args": "${current_doc} -o ${current_doc_name} -lws2_32 -Wall -Wextra",
+        "command": "clang",
+        "working_dir": "${project_root}"
+      }
+    ],
+    "build_types": [],
+    "clean": [
+      {
+        "args": "",
+        "command": "",
+        "working_dir": ""
+      }
+    ],
+    "config": {
+      "clear_sys_env": false,
+      "strip_ansi_codes": false
+    },
+    "os": [
+      "windows"
+    ],
+    "output_parser": {
+      "config": {
+        "preset": "generic",
+        "relative_file_paths": true
+      }
+    },
+    "run": [
+      {
+        "args": "",
+        "command": ".\\${current_doc}",
+        "name": "Custom Executable",
+        "run_in_terminal": true,
+        "working_dir": "${project_root}"
+      }
+    ]
+  }
+}
