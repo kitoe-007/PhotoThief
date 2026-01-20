@@ -15,14 +15,13 @@
 #include <stdio.h>
 #include <stdbool.h>
 // check the result integer for a potential errors, retrieve last error
-static inline void ResultWrap(int result, LPADDRINFO addrinforef) {
+static inline void ResultWrap(int result) {
   if (result != 0) {
     printf("Error occured upon calling: %d, error code in result: %d\n", WSAGetLastError(), result);
     WSACleanup();
   }
   else if (result == SOCKET_ERROR) {
     printf("Socket failed with an error: %d\n", WSAGetLastError());
-    freeaddrinfo(addrinforef);
     WSACleanup();
   }
 }

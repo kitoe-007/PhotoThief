@@ -5,22 +5,23 @@
 #define _UNICODE
 #endif
 #ifndef WIN32_MEAN_AND_LEAN
-#define WIN32_MEAN_AND_LEAN
+#define WIN32_MEAN_AND_LEAN 1
 #endif
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include <windows.h>
 #include <winsock2.h>
+#include <windows.h>
 #include <ws2tcpip.h>
 #include "errorhandler.h"
 
 #define LOCAL_PORT "55555"
-
+int call_result;
+unsigned char recvbuf[];
+size_t buflenght;
 int main() {
   WSADATA wsadata;
-  int call_result;
   WSAStartup(MAKEWORD(2, 2), &wsadata);
   // general connection info
   struct addrinfo general, *res_pattern = NULL, *result = NULL;
@@ -29,10 +30,12 @@ int main() {
   general.ai_socktype = SOCK_STREAM;
   general.ai_protocol = IPPROTO_TCP;
   general.ai_flags = AI_PASSIVE;
+  
   // create a list of possible configurations
   call_result = getaddrinfo(0, LOCAL_PORT, &general, &result);
   ResultWrap(call_result);
   res_pattern = result;
+  
   // create a new socket
   SOCKET listen_socket = socket(
   res_pattern->ai_family,
@@ -40,15 +43,37 @@ int main() {
   res_pattern->ai_protocol
   );
   CheckSock(listen_socket);
+  
   // bind the socket to our IP and port
   call_result = bind(listen_socket, res_pattern->ai_addr, res_pattern->ai_addrlen);
   ResultWrap(call_result);
   printf("socket bound");
-  //listen on a socket for incoming connections
+  
+  // listen on a socket for incoming connections
   call_result = listen(listen_socket, SOMAXCONN);
   ResultWrap(call_result);
   printf("socket is listening!");
+  SOCKET client_socket = accept(listen_socket, NULL, NULL);
+  CheckSock(client_socket);
+  printf("connection accepted!");
   
+  // send packets
+  char buf[] = "test packet transmission";
+  call_result = send(client_socket, buf, strlen(buf), 0);
+  ResultWrap(call_result);
   
+  // receive packets
+  do {
+    call_result = recv(client_socket, buf, strlen(buf), 0);
+    ResultWrap(call_result);
+  } while (call_result > 0);
+  printf("received string: %s", buf);
   return 0;
+  
+  // shutdown
+  call_result = shutdown(client_socket, SD_BOTH);
+  call_result = closesocket(client_socket);
+  WSACleanup();
+  
 }
+
