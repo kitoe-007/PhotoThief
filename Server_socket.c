@@ -57,12 +57,12 @@ int main() {
 	printf("connection accepted!");
 
 	// send packets
-	char buf[] = "starter string";
+	char buf[] = "connection established";
 	call_result = send(client_socket, buf, strlen(buf), 0);
 	ResultWrap(call_result);
 	
 	// receive packets
-	char pic_size_buf[15]; // picture size buffer (in Megabytes)
+	char pic_size_buf[3]; // picture size buffer (in Megabytes)
 	size_t pic_size; // for casting the buffer
 
 	do {
