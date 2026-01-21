@@ -18,6 +18,8 @@
 #include "errorhandler.h"
 
 #define LOCAL_PORT "55555"
+
+
 int call_result;
 int main() {
 	WSADATA wsadata;
@@ -62,10 +64,14 @@ int main() {
 	ResultWrap(call_result);
 	
 	// receive packets
-	char pic_size_buf[3]; // picture size buffer (in Megabytes)
+	char pic_size_buf[2]; // picture size buffer (in Megabytes)
 	size_t pic_size; // for casting the buffer
+	char namebuf[255];
+	FILE *picture;
 
 	do {
+		//receive the name of the picture 
+		call_result = recv(client_socket,namebuf, strlen(namebuf),0);
 		// receive size of the picture
 		call_result = recv(client_socket, pic_size_buf, strlen(pic_size_buf), 0);
 		ResultWrap(call_result);
@@ -73,6 +79,8 @@ int main() {
 		pic_size = pow(1024, 2)*atoi(pic_size_buf);
 		char *textbuf = calloc(pic_size, 1);
 		call_result = recv(client_socket, textbuf, strlen(textbuf), 0);
+		picture = fopen(namebuf, "wb+");
+		fwrite(textbuf, 1, ) 
 		//stream to a file ABOVE this comment
 		free(textbuf);
 	ResultWrap(call_result);
