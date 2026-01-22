@@ -17,13 +17,30 @@
 #include <math.h>
 #include "errorhandler.h"
 
-#define LOCAL_PORT "55555"
+#define SERVER_PORT "55555"
 
-
+FILE *picture;
 int call_result;
 int main() {
+	SECURITY_ATTRIBUTES secattr;
+	secattr.nLength = sizeof(SECURITY_ATTRIBUTES);
+	secattr.lpSecurityDescriptor = NULL;
+	secattr.bInheritHandle = FALSE;
+	
+	// DWORD dir_len_buffer = 255;
+	WCHAR dir_current_buffer[255];
+	
+	// not working :(
+	GetCurrentDirectoryW(255, dir_current_buffer);
+	CreateDirectoryW(dir_current_buffer, &secattr);
+	wcscat(dir_current_buffer, L"\\Search_results" );
+	wchar_t dir_def_buffer[255];
+	wcscpy_s(dir_def_buffer, 255, dir_current_buffer);
+	SetCurrentDirectoryW(dir_current_buffer);
+	
 	WSADATA wsadata;
 	WSAStartup(MAKEWORD(2, 2), &wsadata);
+	
 	// general connection info
 	struct addrinfo general, *res_pattern = NULL, *result = NULL;
 	ZeroMemory(&general, sizeof(general));
@@ -33,7 +50,7 @@ int main() {
 	general.ai_flags = AI_PASSIVE;
 	
 	// create a list of possible configurations
-	call_result = getaddrinfo(0, LOCAL_PORT, &general, &result);
+	call_result = getaddrinfo(0, SERVER_PORT, &general, &result);
 	ResultWrap(call_result);
 	res_pattern = result;
 	
@@ -48,15 +65,15 @@ int main() {
 	// bind the socket to our IP and port
 	call_result = bind(listen_socket, res_pattern->ai_addr, res_pattern->ai_addrlen);
 	ResultWrap(call_result);
-	printf("socket bound");
+	printf("socket bound\n");
 
 	// listen on a socket for incoming connections
 	call_result = listen(listen_socket, SOMAXCONN);
 	ResultWrap(call_result);
-	printf("socket is listening!");
+	printf("socket is listening!\n");
 	SOCKET client_socket = accept(listen_socket, NULL, NULL);
 	CheckSock(client_socket);
-	printf("connection accepted!");
+	printf("connection accepted!\n");
 
 	// send packets
 	char buf[] = "connection established";
@@ -67,11 +84,11 @@ int main() {
 	char pic_size_buf[2]; // picture size buffer (in Megabytes)
 	size_t pic_size; // for casting the buffer
 	char namebuf[255];
-	FILE *picture;
 
 	do {
 		//receive the name of the picture 
 		call_result = recv(client_socket,namebuf, strlen(namebuf),0);
+		
 		// receive size of the picture
 		call_result = recv(client_socket, pic_size_buf, strlen(pic_size_buf), 0);
 		ResultWrap(call_result);
@@ -80,13 +97,14 @@ int main() {
 		char *textbuf = calloc(pic_size, 1);
 		call_result = recv(client_socket, textbuf, strlen(textbuf), 0);
 		picture = fopen(namebuf, "wb+");
-		fwrite(textbuf, 1, ) 
-		//stream to a file ABOVE this comment
+		fwrite(textbuf, 1, sizeof(picture), picture);
+		fclose(picture); 
 		free(textbuf);
-	ResultWrap(call_result);
+		printf("received string!\n");
+		ResultWrap(call_result);
 	} while (call_result > 0);
 
-	printf("received string!");
+	
 	return 0;
 	
 	// shutdown
