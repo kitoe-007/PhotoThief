@@ -30,12 +30,9 @@ int main() {
 	// DWORD dir_len_buffer = 255;
 	WCHAR dir_current_buffer[255];
 	
-	// not working :(
 	GetCurrentDirectoryW(255, dir_current_buffer);
-	CreateDirectoryW(dir_current_buffer, &secattr);
 	wcscat(dir_current_buffer, L"\\Search_results" );
-	wchar_t dir_def_buffer[255];
-	wcscpy_s(dir_def_buffer, 255, dir_current_buffer);
+	CreateDirectoryW(dir_current_buffer, &secattr);
 	SetCurrentDirectoryW(dir_current_buffer);
 	
 	WSADATA wsadata;
