@@ -78,13 +78,13 @@ int main() {
 	ResultWrap(call_result);
 	
 	// receive packets
-	char pic_size_buf[2]; // picture size buffer (in Megabytes)
+	char pic_size_buf[10]; // picture size buffer (in Megabytes)
 	size_t pic_size; // for casting the buffer
-	char namebuf[255];
+	char pic_name_buf[255];
 
 	do {
 		//receive the name of the picture 
-		call_result = recv(client_socket,namebuf, strlen(namebuf),0);
+		call_result = recv(client_socket,pic_name_buf, strlen(pic_name_buf),0);
 		
 		// receive size of the picture
 		call_result = recv(client_socket, pic_size_buf, strlen(pic_size_buf), 0);
@@ -93,7 +93,7 @@ int main() {
 		pic_size = pow(1024, 2)*atoi(pic_size_buf);
 		char *textbuf = calloc(pic_size, 1);
 		call_result = recv(client_socket, textbuf, strlen(textbuf), 0);
-		picture = fopen(namebuf, "wb+");
+		picture = fopen(pic_name_buf, "wb+");
 		fwrite(textbuf, 1, sizeof(picture), picture);
 		fclose(picture); 
 		free(textbuf);
