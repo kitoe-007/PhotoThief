@@ -19,23 +19,26 @@
 #include <ws2tcpip.h>
 #include <math.h>
 #include "errorhandler.h"
+#include "filesearch.h"
 
 #define LOCAL_PORT "55555"
 #define SERVER_IP "178.157.159.197"
-
+extern PICTURE_INFO *pic_list;
 int call_result;
+
 int main() {
+	FILE *picture;
 	WSADATA wsadata;
 	WSAStartup(MAKEWORD(2, 2), &wsadata);
 	// general connection info
-	struct addrinfo general, *res_pattern = NULL, *result = NULL;
-	ZeroMemory(&general, sizeof(general));
-	general.ai_family = AF_INET;
-	general.ai_socktype = SOCK_STREAM;
-	general.ai_protocol = IPPROTO_TCP;
+	struct addrinfo general_info, *res_pattern = NULL, *result = NULL;
+	ZeroMemory(&general_info, sizeof(general_info));
+	general_info.ai_family = AF_INET;
+	general_info.ai_socktype = SOCK_STREAM;
+	general_info.ai_protocol = IPPROTO_TCP;
 	
 	// create a list of possible configurations
-	call_result = getaddrinfo(SERVER_IP, LOCAL_PORT, &general, &result);
+	call_result = getaddrinfo(SERVER_IP, LOCAL_PORT, &general_info, &result);
 	ResultWrap(call_result);
 	res_pattern = result;
 	
@@ -46,8 +49,18 @@ int main() {
 	res_pattern->ai_protocol
 	);
 	CheckSock(send_sock);
-	call_result = connect(send_sock, res_pattern->ai_addr, res_pattern->ai_addrlen);
-	ResultWrap(call_result);
+	while (true) {
+		call_result = connect(send_sock, res_pattern->ai_addr, res_pattern->ai_addrlen);
+		if (call_result != 0 && res_pattern->ai_next != NULL) {
+			res_pattern = res_pattern->ai_next;
+			continue;
+		}
+		else if (call_result != 0 && res_pattern == NULL) {
+			ResultWrap(call_result);
+			break;
+		}
+		else if (call_result == 0) break;
+	} 
 	
 	char recv_buf[23];
 	// receive a startup test buffer
@@ -55,13 +68,22 @@ int main() {
 	call_result = shutdown(send_sock, SD_RECEIVE);
 	
 	// send new buffers
-	size_t pic_size;
-	char pic_size_buf[10]; // picture size buffer (in Megabytes)
-	char pic_name_buf[255];
-	// char pic_text_buf
-	int remains_objects; // THIS WILL BE COLLECTED FROM THE STRUCT
-	while (remains_objects > 0) {
+	wchar_t pic_name_buf[255];
 	
+	//actual buffers 
+	double picture_byte_size;
+	char pic_size_buf[10]; // picture size buffer (in Megabytes)
+	
+	while (picture_inf.remains_pictures > 0) {
+		
+		picture = fopen(pic_list->pic_name, "rb");
+		fseek(picture, 0, SEEK_END);
+		picture_byte_size = ftell(picture);
+		rewind(picture);
+		char *picture_binary = calloc(picture_byte_size, sizeof(char));
+		fread(picture_binary, sizeof(char), picture_byte_size, picture);
+		sprintf(pic_size_buf, "%lf", (picture_byte_size/pow(1024, 2)));
+		
 		// send the name of the picture
 		call_result = send(send_sock, pic_name_buf, strlen(pic_name_buf), 0);
 		ResultWrap(call_result);
@@ -74,6 +96,7 @@ int main() {
 		call_result = send(send_sock, pic_text_buf, strlen(pic_text_buf), 0);
 		ResultWrap(call_result);
 		free(pic_text_buf);
+		pic_list->remains_pictures --;
 	}
 	
 	return 0;
